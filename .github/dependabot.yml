@@ -1,0 +1,21 @@
+# Dependabot configuration for security and dependency updates
+version: 2
+updates:
+  # Monitor npm dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    # Limit number of open PRs to avoid spam
+    open-pull-requests-limit: 5
+    # Assign PRs to you for review
+    assignees:
+      - "braxtonbooth"
+    # Group security updates
+    groups:
+      security-updates:
+        patterns:
+          - "*"
+        update-types:
+          - "patch"
+          - "minor"

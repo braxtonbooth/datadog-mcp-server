@@ -1,5 +1,7 @@
 # Datadog MCP Server
 
+> **Note:** This is an audited fork of [GeLi2001/datadog-mcp-server](https://github.com/GeLi2001/datadog-mcp-server) maintained by [@braxtonbooth](https://github.com/braxtonbooth). Security reviewed and monitored via Dependabot.
+
 A Model Context Protocol (MCP) server for interacting with the Datadog API.
 
 <a href="https://glama.ai/mcp/servers/@GeLi2001/datadog-mcp-server">

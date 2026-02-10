@@ -1,6 +1,6 @@
 {
   "name": "@braxtonbooth/datadog-mcp-server",
-  "version": "1.0.9",
+  "version": "1.1.0",
   "description": "MCP Server for Datadog API (Audited fork of GeLi2001/datadog-mcp-server)",
   "main": "dist/index.js",
   "type": "commonjs",

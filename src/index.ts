@@ -17,6 +17,9 @@ import { getMetrics } from "./tools/getMetrics.js";
 import { getMonitor } from "./tools/getMonitor.js";
 import { getMonitors } from "./tools/getMonitors.js";
 import { searchLogs } from "./tools/searchLogs.js";
+import { searchSpans } from "./tools/searchSpans.js";
+import { aggregateSpans } from "./tools/aggregateSpans.js";
+import { getTrace } from "./tools/getTrace.js";
 
 // Parse command line arguments
 const argv = minimist(process.argv.slice(2));
@@ -75,6 +78,9 @@ getEvents.initialize();
 getIncidents.initialize();
 searchLogs.initialize();
 aggregateLogs.initialize();
+searchSpans.initialize();
+aggregateSpans.initialize();
+getTrace.initialize();
 
 // Set up MCP server
 const server = new McpServer({
@@ -284,6 +290,99 @@ server.tool(
   },
   async (args) => {
     const result = await aggregateLogs.execute(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result) }]
+    };
+  }
+);
+
+server.tool(
+  "search-spans",
+  "Search APM spans in Datadog with filtering options. Use filter.query for search terms (e.g., 'service:web-app operation_name:http.request'), from/to for time ranges (e.g., 'now-1h', 'now'), and sort to order results. Essential for investigating application performance and tracing issues. Rate limited to 300 requests/hour.",
+  {
+    filter: z
+      .object({
+        query: z.string().optional(),
+        from: z.string().optional(),
+        to: z.string().optional()
+      })
+      .optional(),
+    sort: z.string().optional(),
+    page: z
+      .object({
+        limit: z.number().optional(),
+        cursor: z.string().optional()
+      })
+      .optional(),
+    limit: z.number().default(100)
+  },
+  async (args) => {
+    const result = await searchSpans.execute(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result) }]
+    };
+  }
+);
+
+server.tool(
+  "aggregate-spans",
+  "Perform analytical queries and aggregations on APM span data. Calculate metrics (count, avg, p50, p99, etc.), group by dimensions (service, resource, etc.), and create statistical summaries from traces. Use this for performance analysis, latency percentiles, and error rate calculations. Rate limited to 300 requests/hour.",
+  {
+    filter: z
+      .object({
+        query: z.string().optional(),
+        from: z.string().optional(),
+        to: z.string().optional()
+      })
+      .optional(),
+    compute: z
+      .array(
+        z.object({
+          aggregation: z.string(),
+          metric: z.string().optional(),
+          type: z.string().optional()
+        })
+      )
+      .optional(),
+    groupBy: z
+      .array(
+        z.object({
+          facet: z.string(),
+          limit: z.number().optional(),
+          sort: z
+            .object({
+              aggregation: z.string().optional(),
+              order: z.string().optional(),
+              metric: z.string().optional(),
+              type: z.string().optional()
+            })
+            .optional()
+        })
+      )
+      .optional(),
+    options: z
+      .object({
+        timezone: z.string().optional()
+      })
+      .optional()
+  },
+  async (args) => {
+    const result = await aggregateSpans.execute(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result) }]
+    };
+  }
+);
+
+server.tool(
+  "get-trace",
+  "Retrieve all spans for a specific trace ID. A trace represents the complete journey of a request through your distributed system. This tool fetches all spans (operations) that belong to the trace, sorted chronologically. Useful for debugging specific requests or understanding the full execution path. Rate limited to 300 requests/hour.",
+  {
+    traceId: z.string(),
+    limit: z.number().default(1000)
+  },
+  async (args) => {
+    const result = await getTrace.execute(args);
     return {
       content: [{ type: "text", text: JSON.stringify(result) }]
     };

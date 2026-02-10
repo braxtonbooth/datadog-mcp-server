@@ -16,6 +16,7 @@ A Model Context Protocol (MCP) server for interacting with the Datadog API.
 - **Events**: Search and retrieve events within timeframes
 - **Logs**: Search logs with advanced filtering and sorting options
 - **Incidents**: Access incident management data
+- **APM (Traces & Spans)**: Search spans, aggregate span data, and retrieve complete traces
 - **API Integration**: Direct integration with Datadog's v1 and v2 APIs
 - **Comprehensive Error Handling**: Clear error messages for API and authentication issues
 - **Service-Specific Endpoints**: Support for different endpoints for logs and metrics
@@ -43,6 +44,7 @@ The following scopes are required for the corresponding features:
 | `get-events` | `events_read` | Read access to events from the event stream |
 | `search-logs`, `aggregate-logs` | `logs_read_data` | Read access to log data for search and aggregation |
 | `get-incidents` | `incident_read` | Read access to incident management data |
+| `search-spans`, `aggregate-spans`, `get-trace` | `apm_read` | Read access to APM traces and spans data |
 
 ### Creating a Scoped Application Key
 
@@ -50,9 +52,10 @@ The following scopes are required for the corresponding features:
 2. Click **New Key**
 3. Enter a name (e.g., "MCP Server - Read Only")
 4. Under **Scopes**, select only the permissions you need:
-   - For full functionality: `monitors_read`, `dashboards_read`, `metrics_read`, `events_read`, `logs_read_data`, `incident_read`
+   - For full functionality: `monitors_read`, `dashboards_read`, `metrics_read`, `events_read`, `logs_read_data`, `incident_read`, `apm_read`
    - For logs only: `logs_read_data`
    - For monitoring only: `monitors_read`, `dashboards_read`, `metrics_read`
+   - For APM only: `apm_read`
 5. Click **Create Key**
 
 > **Note**: If you don't specify any scopes when creating an Application Key, it will have full access with all permissions of the creating user. For production use, we recommend always specifying explicit scopes.
@@ -186,6 +189,7 @@ npx @modelcontextprotocol/inspector datadog-mcp-server --apiKey=your_api_key --a
 
 The server provides these MCP tools:
 
+### Monitoring & Observability
 - **get-monitors**: Fetch monitors with optional filtering
 - **get-monitor**: Get details of a specific monitor by ID
 - **get-dashboards**: List all dashboards
@@ -194,8 +198,15 @@ The server provides these MCP tools:
 - **get-metric-metadata**: Get metadata for a specific metric
 - **get-events**: Fetch events within a time range
 - **get-incidents**: List incidents with optional filtering
+
+### Logs
 - **search-logs**: Search logs with advanced query filtering
 - **aggregate-logs**: Perform analytics and aggregations on log data
+
+### APM (Application Performance Monitoring)
+- **search-spans**: Search APM spans with filtering by service, operation, time range, etc.
+- **aggregate-spans**: Aggregate span data for performance analysis (latency percentiles, error rates, etc.)
+- **get-trace**: Retrieve all spans for a specific trace ID to see the complete request journey
 
 ## Examples
 
@@ -292,6 +303,77 @@ The server provides these MCP tools:
       "includeArchived": false,
       "query": "state:active",
       "pageSize": 10
+    }
+  }
+}
+```
+
+### Example: Search Spans
+
+```javascript
+{
+  "method": "tools/call",
+  "params": {
+    "name": "search-spans",
+    "arguments": {
+      "filter": {
+        "query": "service:web-app operation_name:http.request",
+        "from": "now-1h",
+        "to": "now"
+      },
+      "sort": "timestamp",
+      "limit": 100
+    }
+  }
+}
+```
+
+### Example: Aggregate Spans
+
+```javascript
+{
+  "method": "tools/call",
+  "params": {
+    "name": "aggregate-spans",
+    "arguments": {
+      "filter": {
+        "query": "service:web-app",
+        "from": "now-1h",
+        "to": "now"
+      },
+      "compute": [
+        {
+          "aggregation": "pc99",
+          "metric": "duration",
+          "type": "total"
+        }
+      ],
+      "groupBy": [
+        {
+          "facet": "resource_name",
+          "limit": 10,
+          "sort": {
+            "aggregation": "pc99",
+            "order": "desc",
+            "type": "measure"
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+### Example: Get Trace
+
+```javascript
+{
+  "method": "tools/call",
+  "params": {
+    "name": "get-trace",
+    "arguments": {
+      "traceId": "1234567890abcdef",
+      "limit": 1000
     }
   }
 }
